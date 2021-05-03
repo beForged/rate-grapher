@@ -1,10 +1,12 @@
 package com.rateGrapher;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
+//import jdk.nashorn.internal.objects.annotations.Getter;
 import lombok.AccessLevel;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
 import net.runelite.client.game.SkillIconManager;
+import net.runelite.client.plugins.timestamp.TimestampPlugin;
+import net.runelite.client.plugins.xptracker.XpTrackerService;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.FontManager;
@@ -35,7 +37,7 @@ public class RateGrapherInfoBox extends JPanel {
     //will hold graph
     private final JPanel statsPanel = new JPanel();
 
-    private final LineGraph lineGraph = new LineGraph();
+    private LineGraph lineGraph;
 
     private final JLabel totalXpGainedStat = new JLabel();
     private final JLabel currentXpRateStat = new JLabel();
@@ -46,12 +48,19 @@ public class RateGrapherInfoBox extends JPanel {
 
     private boolean paused = false;
 
-    RateGrapherInfoBox(RateGrapherPlugin rateGrapherPlugin, RateGrapherConfig rateGrapherConfig, Client client, JComponent panel, Skill skill, SkillIconManager iconManager)
+    RateGrapherInfoBox(
+            RateGrapherPlugin rateGrapherPlugin,
+            RateGrapherConfig rateGrapherConfig,
+            Client client,
+            JComponent panel,
+            Skill skill,
+            SkillIconManager iconManager)
     {
         this.rateGrapherConfig = rateGrapherConfig;
         this.panel = panel;
         this.skill = skill;
 
+        System.err.println("reached infobox for " + skill.toString());
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(5,0,0,0));
 
@@ -87,6 +96,9 @@ public class RateGrapherInfoBox extends JPanel {
         skillIcon.setVerticalAlignment(SwingConstants.CENTER);
         skillIcon.setPreferredSize(new Dimension(35,35));
 
+        JLabel skillName = new JLabel();
+        skillName.setText(skill.toString());
+
         headerPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         headerPanel.setLayout(new BorderLayout());
 
@@ -94,31 +106,54 @@ public class RateGrapherInfoBox extends JPanel {
         statsPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         statsPanel.setBorder(new EmptyBorder(9,2,9,2));
 
+        //these will have to be set/updated
         totalXpGainedStat.setFont(FontManager.getRunescapeSmallFont());
         currentXpRateStat.setFont(FontManager.getRunescapeSmallFont());
 
         statsPanel.add(totalXpGainedStat);
         statsPanel.add(currentXpRateStat);
 
+        //TODO it looks kind of ugly
         headerPanel.add(skillIcon, BorderLayout.WEST);
-        headerPanel.add(statsPanel, BorderLayout.CENTER);
+        headerPanel.add(skillName, BorderLayout.CENTER);
+        headerPanel.add(statsPanel, BorderLayout.EAST);
 
-        //TODO add the graph panel here
         JPanel graphWrapper = new JPanel();
         graphWrapper.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        graphWrapper.setLayout(new BorderLayout());
+        //graphWrapper.setLayout(new BorderLayout());
+        graphWrapper.setLayout(new GridLayout(1, 1));
         graphWrapper.setBorder(new EmptyBorder(0,7,7,7));
 
-        //graphWrapper.add(lineGraph, BorderLayout.NORTH);
+        lineGraph = new LineGraph();
+        
+        graphWrapper.add(lineGraph);
 
         container.add(headerPanel, BorderLayout.NORTH);
-        container.add(graphWrapper, BorderLayout.SOUTH);
+        container.add(graphWrapper, BorderLayout.CENTER);
+
+        /*
         MouseDragEventForwarder mouseDragEventForwarder = new MouseDragEventForwarder(panel);
         container.addMouseListener(mouseDragEventForwarder);
         container.addMouseMotionListener(mouseDragEventForwarder);
         lineGraph.addMouseListener(mouseDragEventForwarder);
         lineGraph.addMouseMotionListener(mouseDragEventForwarder);
+        */
 
         add(container, BorderLayout.NORTH);
+
+    }
+
+
+    void update(boolean updated, boolean paused, XpTrackerService xpTrackerService){
+        SwingUtilities.invokeLater(()-> rebuildAsync(updated, paused, xpTrackerService));
+    }
+
+    private void rebuildAsync(boolean updated, boolean paused, XpTrackerService xpTrackerService){
+        if(updated){
+            //container.getComponent()
+            int xp = xpTrackerService.getXpHr(skill);
+            lineGraph.update(xp);
+            //lineGraph.update(new DataPoint(time, xp));
+        }
     }
 }

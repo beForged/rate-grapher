@@ -23,4 +23,11 @@ public interface RateGrapherConfig extends Config
 	)
 	default int height(){ return 400;}
  */
+
+	@ConfigItem(
+			keyName = "activate total xp graph",
+			name = "activate total xp graph",
+			description = "activate the total xp graph. will update every tick"
+	)
+	default boolean activate(){return false;}
 }

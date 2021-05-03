@@ -3,27 +3,34 @@ package com.rateGrapher;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
-import net.runelite.api.Skill;
-import net.runelite.api.GameState;
+import net.runelite.api.*;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDependency;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.xptracker.XpTrackerPlugin;
+import net.runelite.client.plugins.xptracker.XpTrackerService;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @PluginDescriptor(
 	name = "Xp Rate Grapher"
 )
+@PluginDependency(XpTrackerPlugin.class)
 public class RateGrapherPlugin extends Plugin
 {
 
@@ -39,23 +46,36 @@ public class RateGrapherPlugin extends Plugin
 	@Inject
 	private SkillIconManager skillIconManager;
 
+
+
+	@Inject
+	private XpTrackerService xpTrackerService;
+
 	public Skill[] skillList;
 	public Skill mostRecentSkillGained;
+
+	private List<Skill> activeSkills;
+	//private Map<Skill, Integer> time;
+	private RateGrapherPanel panel;
 
 	public int tickCount = 0;
 	public int startTime = 0;
 	public int currentTime = 0;
 
 	private NavigationButton navButton;
-	private RateGrapherPanel rateGrapherPanel;
 
+	private boolean initializeTracker;
 //	private OverlayManager overlayManager;
 
+	private boolean panelEnabled;
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Grapher started!");
-		rateGrapherPanel = new RateGrapherPanel(this, rateGrapherConfig, client, skillIconManager);
+		//log.info("Grapher started!");
+
+		panel = new RateGrapherPanel(this, rateGrapherConfig, xpTrackerService, client, skillIconManager);
+		//rateGrapherPanel = new RateGrapherPanel(this, rateGrapherConfig, client, skillIconManager);
+		//panel = new RateGrapherPanel(this);
 
 		final BufferedImage icon = ImageUtil.getResourceStreamFromClass(getClass(), "/skill_icons/overall.png");
 
@@ -63,10 +83,14 @@ public class RateGrapherPlugin extends Plugin
 				.tooltip("xp rate grapher")
 				.icon(icon)
 				.priority(10)
-				.panel(rateGrapherPanel)
+				.panel(panel)
 				.build();
 
 		clientToolbar.addNavigation(navButton);
+
+		activeSkills = new ArrayList<>();
+
+		//panel.update(activeSkills);
 
 	}
 
@@ -74,15 +98,28 @@ public class RateGrapherPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		clientToolbar.removeNavigation(navButton);
-		log.info("Grapher stopped!");
+		//log.info("Grapher stopped!");
 	}
 
+
+	//TODO later
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+		GameState state = gameStateChanged.getGameState();
+		if (state == GameState.LOGGED_IN)
 		{
 //			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Example says " + config.greeting(), null);
+			//should check if username or world type changed
+			//if(!Objects.equals(client.getUsername(), lastUsername))
+		}
+		else if (state == GameState.LOGGING_IN || state == GameState.HOPPING)
+		{
+			initializeTracker = true;
+		}
+		else if (state == GameState.LOGIN_SCREEN)
+		{
+
 		}
 	}
 
@@ -92,6 +129,7 @@ public class RateGrapherPlugin extends Plugin
 		return configManager.getConfig(RateGrapherConfig.class);
 	}
 
+	//TODO
 	void resetAndInitState()
 	{
 
@@ -103,14 +141,44 @@ public class RateGrapherPlugin extends Plugin
 		}
 	}
 
+	//TODO
 	private void resetState()
 	{
 
 	}
 
+	//nothing to do here not making an overlay
 	boolean hasOverlay(final Skill skill){
-		//TODO rateGrapherInfoBoxOverlay
-		//return overlayManager.anyMatch(o -> o instanceof rateGrapher);
 		return false; //no overlay for now
 	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged statChanged)
+	{
+	    final Skill skill = statChanged.getSkill();
+	    final int currentXp = statChanged.getXp();
+	    final int currentLevel = statChanged.getLevel();
+	    //log.debug("stat changed: " + skill.toString());
+		//System.out.println("stat changed: " + skill.toString());
+
+		//goal xp stuff goes here
+
+        //check that this isnt becuase of stat drain or boost
+		//add a timer to make sure that it doesnt update forever?
+
+		activeSkills.add(skill);
+		//panel.updateSkillExperience(true, false, skill);
+	}
+
+
+	//update total xp graph here
+	@Subscribe
+	public void onGameTick(GameTick event){
+		//update all here?
+		for(Skill s: activeSkills){
+			panel.updateSkillExperience(true, false, s);
+		}
+	}
+
+
 }
