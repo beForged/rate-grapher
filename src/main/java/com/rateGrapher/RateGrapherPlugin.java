@@ -158,16 +158,18 @@ public class RateGrapherPlugin extends Plugin
 	    final Skill skill = statChanged.getSkill();
 	    final int currentXp = statChanged.getXp();
 	    final int currentLevel = statChanged.getLevel();
-	    //log.debug("stat changed: " + skill.toString());
-		//System.out.println("stat changed: " + skill.toString());
 
-		//goal xp stuff goes here
+		if(initializeTracker){
+			//TODO figureout where to set this
+			return;
+		}
 
-        //check that this isnt becuase of stat drain or boost
-		//add a timer to make sure that it doesnt update forever?
-
+		//final XpStateSingle state = xpState.getSkill(skill);
+		
 		activeSkills.add(skill);
-		//panel.updateSkillExperience(true, false, skill);
+		panel.updateTotal();
+		//panel.updateTotal(xpState.getTotalSnapshot());
+
 	}
 
 

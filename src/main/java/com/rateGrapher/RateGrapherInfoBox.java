@@ -60,7 +60,7 @@ public class RateGrapherInfoBox extends JPanel {
         this.panel = panel;
         this.skill = skill;
 
-        System.err.println("reached infobox for " + skill.toString());
+        //System.err.println("reached infobox for " + skill.toString());
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(5,0,0,0));
 
@@ -143,6 +143,12 @@ public class RateGrapherInfoBox extends JPanel {
 
     }
 
+    // same as plugin/infotracker/xpinfobox on runelite client
+    void reset(){
+        canvasItem.setText(ADD_STATE);
+        panel.remove(this);
+        panel.revalidate();
+    }
 
     void update(boolean updated, boolean paused, XpTrackerService xpTrackerService){
         SwingUtilities.invokeLater(()-> rebuildAsync(updated, paused, xpTrackerService));
@@ -150,10 +156,12 @@ public class RateGrapherInfoBox extends JPanel {
 
     private void rebuildAsync(boolean updated, boolean paused, XpTrackerService xpTrackerService){
         if(updated){
-            //container.getComponent()
+            if(getParent() != panel){
+                panel.add(this);
+                panel.revalidate();
+            }
             int xp = xpTrackerService.getXpHr(skill);
             lineGraph.update(xp);
-            //lineGraph.update(new DataPoint(time, xp));
         }
     }
 }

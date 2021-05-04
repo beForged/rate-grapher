@@ -105,15 +105,13 @@ public class LineGraph extends JPanel{
         //this is the width you can use i suppose you could write a helper but its not a n dimensional graph
         int graphWidth = width - (padding * 2);
         int graphHeight = height - (padding * 2);
+        //want to use graphwidth to help space out points 
 
-        if (!pos.isEmpty()) {
-            //positions = timing(graphWidth, 2);
+        if (!pos.isEmpty() && !positions.isEmpty()) {
+
             // draw the lines
-
             DataPoint prev = positions.get(0);
             g2.setColor(ColorScheme.PROGRESS_COMPLETE_COLOR);
-            //spacing is space between ticks
-            //positions = shorten(graphWidth, 2);
             for (DataPoint p : positions) {
                 if (p.getValue() > maximumValue) {
                     maximumValue = p.getValue();
@@ -154,6 +152,7 @@ public class LineGraph extends JPanel{
     }
 
     public void update(int xp) {
+        System.err.println("update: " + xp);
         pos.add(xp);
         positions.add(new DataPoint(pos.size(), xp));
     }

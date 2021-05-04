@@ -101,15 +101,15 @@ public class RateGrapherPanel extends PluginPanel {
             infoBoxes.put(skill, new RateGrapherInfoBox(rateGrapherPlugin, rateGrapherConfig, client, infoboxPanel, skill, iconManager));
         }
 
-        for(RateGrapherInfoBox box : infoBoxes.values()){
-            layoutPanel.add(box);
-        }
+        //for(RateGrapherInfoBox box : infoBoxes.values()){
+        //    layoutPanel.add(box);
+        //}
 
         add(layoutPanel);
 
         //do we need this? TODO
         errorPanel.setContent("Exp rate Grapher", "you have not gained exp yet");
-        //add(errorPanel);
+        add(errorPanel);
 
     }
 
@@ -133,21 +133,25 @@ public class RateGrapherPanel extends PluginPanel {
         //System.out.println("update " + skill.toString() + " experience: " + xpTrackerService.getXpHr(skill));
         if(rateGrapherInfoBox != null){
             rateGrapherInfoBox.update(updated, paused, xpTrackerService);
-            //System.out.println(rateGrapherInfoBox.isVisible() + " " + skill.toString());
-            if(!rateGrapherInfoBox.isVisible()){
-                rateGrapherInfoBox.setVisible(true);
-            }
+            // if(!rateGrapherInfoBox.isVisible()){
+                // rateGrapherInfoBox.setVisible(true);
+            // }
         }
 
     }
 
     //this is for total xp
-    void updateTotal(boolean updated, boolean paused, Skill skill){
-
-
+    void updateTotal(){
+        
+        if(!overallPanel.isVisible()){
+            overallPanel.setVisible(true);
+            remove(errorPanel);
+        } 
+        SwingUtilities.invokeLater(() -> rebuildAsync());
     }
 
     private void rebuildAsync(){
+        //TODO xp snapshot stuff
 
     }
 }
